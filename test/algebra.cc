@@ -83,7 +83,7 @@ TEST_F(algebra_test, vector_algebra) {
     constexpr aux::versor<double, 3> a{1,2,3};
     constexpr aux::versor<double, 3> b{4,5,6};
     constexpr aux::versor<double, 3> c{9,8,7};
-    ASSERT_EQ(inner(a, b), 1*4+2*5+3*6);
+    ASSERT_EQ(inner(a, b), 1*4 + 2*5 + 3*6);
     ASSERT_EQ(cross(a, cross(b, c)), b * inner(a, c) - c * inner(a, b));
     ASSERT_EQ(cross(aux::vec3d{1,0,0}, aux::vec3d{0,1,0}), (aux::vec3d{0,0,1}));
 }
@@ -93,6 +93,4 @@ TEST_F(algebra_test, etc_operation) {
     ASSERT_EQ(a, (aux::versor<int, 4>{1,2,3,4}));
     ASSERT_EQ(sizeof (a), sizeof (int) * 4);
     ASSERT_EQ((aux::vec2i{3,4} % 2), (aux::vec2i{1,0}));
-    EXPECT_EQ((aux::versor<int, 3>{1,2,3} + aux::versor<int, 2>{1,2}),
-              (aux::versor<int, 3>{2,4,3}));
 }

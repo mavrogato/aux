@@ -33,12 +33,6 @@ namespace aux::inline algebra
             {
                 static_assert(sizeof... (args) <= N);
             }
-
-        constexpr versor(base_type base, value_type last) noexcept
-            : base_type{base}, last{last}
-            {
-            }
-
     private:
         constexpr static auto place(std::initializer_list<T> const& args, size_t i) noexcept {
             return (i < args.size()) ? *(args.begin() + i) : T();
@@ -54,6 +48,11 @@ namespace aux::inline algebra
         versor<T2, N> coerce() const noexcept {
             return versor<T2, N>{base_type::template coerce<T2>(), static_cast<T2>(this->last)};
         }
+        // (WIP) Constructor only used by coercing...
+        constexpr versor(base_type base, value_type last) noexcept
+            : base_type{base}, last{last}
+            {
+            }
 
     public:
         template <size_t I>
@@ -88,15 +87,27 @@ namespace aux::inline algebra
         constexpr auto& operator[](size_t i)       noexcept { return *(this->begin() + i); }
 
     public:
-        template <class Func, class ...Rest>
-        constexpr auto& apply(Func&& func, Rest&& ...rest) noexcept {
-            this->last = func(this->last, rest.last...);
-            if constexpr ((std::is_rvalue_reference_v<Rest> && ...)) {
-                base_type::apply(std::forward<Func>(func), std::move(static_cast<base_type&&>(rest))...);
-            }
-            else {
-                base_type::apply(std::forward<Func>(func), static_cast<base_type const&>(rest)...);
-            }
+        // template <class Func, class ...Rest>
+        // constexpr auto& apply(Func&& func, Rest&& ...rest) noexcept {
+        //     this->last = func(this->last, rest.last...);
+        //     if constexpr ((std::is_rvalue_reference_v<Rest> && ...)) {
+        //         base_type::apply(std::forward<Func>(func), std::move(static_cast<base_type&&>(rest))...);
+        //     }
+        //     else {
+        //         base_type::apply(std::forward<Func>(func), static_cast<base_type const&>(rest)...);
+        //     }
+        //     return *this;
+        // }
+        template <class Func>
+        constexpr auto& apply(Func&& func) {
+            this->last = func(this->last);
+            base_type::apply(std::forward<Func>(func));
+            return *this;
+        }
+        template <class Func>
+        constexpr auto& apply(Func&& func, versor const& rhs) {
+            this->last = func(this->last, rhs.last);
+            base_type::apply(std::forward<Func>(func), static_cast<base_type const&>(rhs));
             return *this;
         }
 
@@ -136,6 +147,7 @@ namespace aux::inline algebra
             });
         }
         constexpr auto operator/(value_type d) const noexcept { return (+(*this)) /= d; }
+
         constexpr auto& operator%=(value_type d) noexcept {
             return apply([d](value_type x) noexcept {
                 return x % d;
