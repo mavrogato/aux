@@ -8,7 +8,10 @@
 #include <type_traits>
 #include <functional>
 #include <bit>
+
+#include <cstdint>
 #include <cstddef>
+#include <cmath>
 
 namespace aux::inline algebra
 {
@@ -170,6 +173,10 @@ namespace aux::inline algebra
         constexpr friend auto inner(versor const& a, versor const& b) noexcept {
             return a.last * b.last + inner(static_cast<base_type const&>(a), static_cast<base_type const&>(b));
         }
+
+        constexpr friend auto norm(versor const& v) noexcept { return inner(v, v); }
+        constexpr friend auto abs(versor const& v) noexcept { return std::sqrt(norm(v)); }
+
     };
 
     template <class T>

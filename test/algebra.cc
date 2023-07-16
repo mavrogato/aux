@@ -63,6 +63,11 @@ TEST_F(algebra_test, linear) {
     ASSERT_EQ(-a + d, a);
 }
 
+TEST_F(algebra_test, euclidean) {
+    ASSERT_EQ(norm(std::versor<int, 2>{3, 4}), 25);
+    EXPECT_EQ(abs(std::versor<int, 2>{3, 4}), 5);
+}
+
 TEST_F(algebra_test, bit_operation) {
     constexpr aux::versor<bool, 5> a;
     for (bool item : +a) ASSERT_EQ(item, false);
