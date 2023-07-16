@@ -119,11 +119,11 @@ namespace aux::inline algebra
         constexpr auto& lognot() noexcept { return apply(std::bit_not<T>()); }
         constexpr auto operator~() const noexcept { return (+(*this)).lognot(); }
 
-        constexpr auto& operator+=(auto&& rhs) noexcept { return apply(std::plus<T>(), rhs); }
-        constexpr auto& operator-=(auto&& rhs) noexcept { return apply(std::minus<T>(), rhs); }
-        constexpr auto& operator&=(auto&& rhs) noexcept { return apply(std::bit_and<T>(), rhs); }
-        constexpr auto& operator|=(auto&& rhs) noexcept { return apply(std::bit_or<T>(), rhs); }
-        constexpr auto& operator^=(auto&& rhs) noexcept { return apply(std::bit_xor<T>(), rhs); }
+        constexpr auto& operator+=(auto&& rhs) noexcept { return this->template apply(std::plus<T>(), rhs); }
+        constexpr auto& operator-=(auto&& rhs) noexcept { return this->template apply(std::minus<T>(), rhs); }
+        constexpr auto& operator&=(auto&& rhs) noexcept { return this->template apply(std::bit_and<T>(), rhs); }
+        constexpr auto& operator|=(auto&& rhs) noexcept { return this->template apply(std::bit_or<T>(), rhs); }
+        constexpr auto& operator^=(auto&& rhs) noexcept { return this->template apply(std::bit_xor<T>(), rhs); }
 
         constexpr auto operator+(auto&& rhs) const noexcept { return (+(*this)) += rhs; }
         constexpr auto operator-(auto&& rhs) const noexcept { return (+(*this)) -= rhs; }
@@ -132,7 +132,7 @@ namespace aux::inline algebra
         constexpr auto operator^(auto&& rhs) const noexcept { return (+(*this)) ^= rhs; }
 
         constexpr auto& operator*=(value_type s) noexcept {
-            return apply([s](value_type x) noexcept {
+            return this->template apply([s](value_type x) noexcept {
                 return x * s;
             });
         }
@@ -140,28 +140,28 @@ namespace aux::inline algebra
         constexpr friend auto operator*(value_type s, versor v) noexcept { return v * s; }
 
         constexpr auto& operator/=(value_type d) noexcept {
-            return apply([d](value_type x) noexcept {
+            return this->template apply([d](value_type x) noexcept {
                 return x / d;
             });
         }
         constexpr auto operator/(value_type d) const noexcept { return (+(*this)) /= d; }
 
         constexpr auto& operator%=(value_type d) noexcept {
-            return apply([d](value_type x) noexcept {
+            return this->template apply([d](value_type x) noexcept {
                 return x % d;
             });
         }
         constexpr auto operator%(value_type d) const noexcept { return (+(*this)) %= d; }
 
         constexpr auto& operator<<=(value_type s) noexcept {
-            return apply([s](value_type x) noexcept {
+            return this->template apply([s](value_type x) noexcept {
                 return x << s;
             });
         }
         constexpr auto operator<<(value_type s) const noexcept { return (+(*this)) <<= s; }
 
         constexpr auto& operator>>=(value_type s) noexcept {
-            return apply([s](value_type x) noexcept {
+            return this->template apply([s](value_type x) noexcept {
                 return x >> s;
             });
         }
