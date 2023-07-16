@@ -10,8 +10,6 @@
 #include <bit>
 #include <cstddef>
 
-#include "aux/tuple-like.hh"
-
 namespace aux::inline algebra
 {
     template <class T, size_t N>

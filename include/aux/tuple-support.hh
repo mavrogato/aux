@@ -1,11 +1,11 @@
-#ifndef INCLUDE_AUX_TUPLE_LIKE_HH_9FC3968B_8F14_4FA6_B497_C23EF1E23A5C
-#define INCLUDE_AUX_TUPLE_LIKE_HH_9FC3968B_8F14_4FA6_B497_C23EF1E23A5C
+#ifndef INCLUDE_AUX_SUPPORT_LIKE_HH_9FC3968B_8F14_4FA6_B497_C23EF1E23A5C
+#define INCLUDE_AUX_SUPPORT_LIKE_HH_9FC3968B_8F14_4FA6_B497_C23EF1E23A5C
 
 #include <concepts>
 #include <iosfwd>
 #include <tuple>
 
-namespace aux::inline tuple_like
+namespace aux::tuple_support
 {
     template <class T, size_t I>
     concept has_tuple_element = requires(T t) {
@@ -19,8 +19,12 @@ namespace aux::inline tuple_like
     } && []<size_t... I>(std::index_sequence<I...>) noexcept {
         return (has_tuple_element<T, I>&& ...);
     }(std::make_index_sequence<std::tuple_size_v<T>>());
+ 
+} // ::aux::tuple_support
 
-    template <class Ch, tuple_like T>
+namespace std
+{
+    template <class Ch, aux::tuple_support::tuple_like T>
     auto& operator<<(std::basic_ostream<Ch>& output, T const& t) noexcept {
         output.put('(');
         [&]<size_t ...I>(std::index_sequence<I...>) noexcept {
@@ -28,8 +32,8 @@ namespace aux::inline tuple_like
         }(std::make_index_sequence<std::tuple_size_v<T>>());
         return output.put(')');
     }
+} // ::std
 
-} // ::aux::tuple_like
 
-#endif/*INCLUDE_AUX_TUPLE_LIKE_HH_9FC3968B_8F14_4FA6_B497_C23EF1E23A5C*/
+#endif/*INCLUDE_AUX_TUPLE_SUPPORT_HH_9FC3968B_8F14_4FA6_B497_C23EF1E23A5C*/
 
