@@ -4,7 +4,8 @@
 #include <filesystem>
 #include <span>
 #include <utility>
-#include <stdexcept>
+
+#include <cassert>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -21,12 +22,9 @@ namespace aux::inline io::inline posix
             : fd{fd}
             {
             }
-        explicit unique_fd(char const* path, int oflag, auto... args)
+        explicit unique_fd(char const* path, int oflag, auto... args) noexcept
             : fd{::open(path, oflag, args...)}
             {
-                if (this->fd == -1) {
-                    std::runtime_error("open failed...");
-                }
             }
         unique_fd(unique_fd&& other) noexcept
             : fd{std::exchange(other.fd, -1)}
@@ -34,13 +32,15 @@ namespace aux::inline io::inline posix
             }
         ~unique_fd() noexcept {
             if (this->fd != -1) {
-                ::close(fd);
+                [[maybe_unused]] auto ret = ::close(fd);
+                assert(ret != -1);
                 this->fd = -1;
             }
         }
         auto& operator=(unique_fd&& other) noexcept {
-            if (this != &other) {
-                std::swap(this->fd, other.fd);
+            if (auto dispose = std::exchange(this->fd, std::exchange(other.fd, -1)); dispose != -1) {
+                [[maybe_unused]] auto ret = ::close(fd);
+                assert(ret != -1);
             }
             return *this;
         }
@@ -64,32 +64,28 @@ namespace aux::inline io::inline posix
                              int prot = PROT_READ | PROT_WRITE,
                              int flags = MAP_SHARED,
                              size_t offset = 0,
-                             void* target = nullptr)
-            : base_type{}
-            , ptr{static_cast<T*>(::mmap(target, length * sizeof (T), prot, flags, fd, offset * sizeof (T)))}
+                             void* target = nullptr) noexcept
+            : base_type{static_cast<T*>(::mmap(target, length * sizeof (T), prot, flags, fd, offset * sizeof (T))), length}
             {
-                if (this->ptr == MAP_FAILED) {
-                    throw std::runtime_error("mmap failed...");
-                }
-                this->base() = base_type(this->ptr, length);
             }
         unique_mmap(unique_mmap&& other) noexcept
             : base_type{std::exchange(other.base(), std::span<T>{})}
-            , ptr{std::exchange(other.ptr, reinterpret_cast<T*>(MAP_FAILED))}
             {
             }
 
         ~unique_mmap() noexcept {
-            if (this->ptr != MAP_FAILED) {
-                ::munmap(this->ptr, this->size() * sizeof (T));
-                this->ptr = nullptr;
+            if (!this->empty() && this->data() != MAP_FAILED) {
+                [[maybe_unused]] auto ret = ::munmap(this->data(), this->size() * sizeof (T));
+                assert(ret != -1);
             }
         }
 
         auto& operator=(unique_mmap&& other) noexcept {
-            if (this != &other) {
-                std::swap(this->base(), other.base());
-                std::swap(this->ptr, other.ptr);
+            if (auto dispose = std::exchange(this->base(), std::exchange(other.base(), {}));
+                !dispose.empty() && dispose.data() != MAP_FAILED)
+            {
+                [[maybe_unused]] auto ret = ::munmap(dispose.data(), dispose.size() * sizeof (T));
+                assert(ret != -1);
             }
             return *this;
         }
@@ -97,9 +93,6 @@ namespace aux::inline io::inline posix
     public:
         operator T const*() const noexcept { return this->data(); }
         operator T*() noexcept { return this->data(); }
-
-    private:
-        T* ptr;
     };
 
 } // ::aux::inline io::inline posix
