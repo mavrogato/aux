@@ -18,10 +18,10 @@ namespace aux::inline shading
     inline uint8_t& b(color& c) noexcept { return c[0]; }
 
     template <uint8_t A = 0xff>
-    color hue(uint32_t h) noexcept {
+    constexpr color calc_hue(uint32_t h) noexcept {
         constexpr uint8_t S = 0xff;
-        uint8_t v = static_cast<uint8_t>(h);
         if (6*S <= h) h %= (S*6);
+        uint8_t v = static_cast<uint8_t>(h);
         if (h <= S) return { 0, v, S, A };
         h -= S;
         v -= S;
@@ -38,6 +38,20 @@ namespace aux::inline shading
         h -= S;
         v -= S;
         return {~v, 0, S, A };
+    }
+
+    template <uint8_t A = 0xff>
+    constexpr auto hue_table = []{
+        std::array<color, 1530> table;
+        for (uint32_t i = 0; i < table.size(); ++i) {
+            table[i] = calc_hue<A>(i);
+        }
+        return table;
+    }();
+
+    template <uint8_t A = 0xff>
+    constexpr color hue(uint32_t h) {
+        return hue_table<A>[h % 1530];
     }
 
 } // ::aux::shading
