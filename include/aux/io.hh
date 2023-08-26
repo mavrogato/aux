@@ -22,10 +22,6 @@ namespace aux::inline io::inline posix
             : fd{fd}
             {
             }
-        // explicit unique_fd(char const* path, int oflag, auto... args) noexcept
-        //     : fd{::open(path, oflag, args...)}
-        //     {
-        //     }
         unique_fd(unique_fd&& other) noexcept
             : fd{std::exchange(other.fd, -1)}
             {
@@ -45,6 +41,7 @@ namespace aux::inline io::inline posix
             return *this;
         }
         operator int() const noexcept { return this->fd; }
+        explicit operator bool() const noexcept { return this->fd != -1; }
 
     private:
         int fd;
@@ -65,8 +62,11 @@ namespace aux::inline io::inline posix
                              int flags = MAP_SHARED,
                              size_t offset = 0,
                              void* target = nullptr) noexcept
-            : base_type{static_cast<T*>(::mmap(target, length * sizeof (T), prot, flags, fd, offset * sizeof (T))), length}
+            : base_type{}
             {
+                if (void* addr = ::mmap(target, length * sizeof (T), prot, flags, fd, offset * sizeof (T))) {
+                    static_cast<base_type&>(*this) = {static_cast<T*>(addr), length};
+                }
             }
         unique_mmap(unique_mmap&& other) noexcept
             : base_type{std::exchange(other.base(), std::span<T>{})}
@@ -93,6 +93,7 @@ namespace aux::inline io::inline posix
     public:
         operator T const*() const noexcept { return this->data(); }
         operator T*() noexcept { return this->data(); }
+        explicit operator bool() const noexcept { return !this->empty(); }
     };
 
 } // ::aux::inline io::inline posix
