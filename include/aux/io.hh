@@ -22,10 +22,10 @@ namespace aux::inline io::inline posix
             : fd{fd}
             {
             }
-        explicit unique_fd(char const* path, int oflag, auto... args) noexcept
-            : fd{::open(path, oflag, args...)}
-            {
-            }
+        // explicit unique_fd(char const* path, int oflag, auto... args) noexcept
+        //     : fd{::open(path, oflag, args...)}
+        //     {
+        //     }
         unique_fd(unique_fd&& other) noexcept
             : fd{std::exchange(other.fd, -1)}
             {
