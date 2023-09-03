@@ -64,7 +64,7 @@ namespace aux::inline io::inline posix
                              void* target = nullptr) noexcept
             : base_type{}
             {
-                if (void* addr = ::mmap(target, length * sizeof (T), prot, flags, fd, offset * sizeof (T))) {
+                if (void* addr = ::mmap(target, length * sizeof (T), prot, flags, fd, offset * sizeof (T)); addr != MAP_FAILED) {
                     static_cast<base_type&>(*this) = {static_cast<T*>(addr), length};
                 }
             }
