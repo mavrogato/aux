@@ -35,7 +35,7 @@ namespace aux::inline io::inline posix
         }
         auto& operator=(unique_fd&& other) noexcept {
             if (auto dispose = std::exchange(this->fd, std::exchange(other.fd, -1)); dispose != -1) {
-                [[maybe_unused]] auto ret = ::close(fd);
+                [[maybe_unused]] auto ret = ::close(dispose);
                 assert(ret != -1);
             }
             return *this;
@@ -81,8 +81,7 @@ namespace aux::inline io::inline posix
         }
 
         auto& operator=(unique_mmap&& other) noexcept {
-            if (auto dispose = std::exchange(this->base(), std::exchange(other.base(), {}));
-                !dispose.empty() && dispose.data() != MAP_FAILED)
+            if (auto dispose = std::exchange(this->base(), std::exchange(other.base(), {})); !dispose.empty())
             {
                 [[maybe_unused]] auto ret = ::munmap(dispose.data(), dispose.size() * sizeof (T));
                 assert(ret != -1);
