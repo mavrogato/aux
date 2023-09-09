@@ -11,8 +11,15 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 
+#include "unique_handle.hh"
+
 namespace aux::inline io::inline posix
 {
+    // T.B.D.: unique_handle should not contains the deleter in the instance...
+    // class [[nodiscard]] unique_fd : public unique_handle<int, &::close, -1> {
+    //     //...
+    // };
+
     class [[nodiscard]] unique_fd {
     public:
         unique_fd(unique_fd const&) = delete;
