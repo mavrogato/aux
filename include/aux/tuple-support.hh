@@ -1,12 +1,74 @@
-#ifndef INCLUDE_AUX_SUPPORT_LIKE_HH_9FC3968B_8F14_4FA6_B497_C23EF1E23A5C
-#define INCLUDE_AUX_SUPPORT_LIKE_HH_9FC3968B_8F14_4FA6_B497_C23EF1E23A5C
+#ifndef INCLUDE_AUX_TUPLE_HH_9FC3968B_8F14_4FA6_B497_C23EF1E23A5C
+#define INCLUDE_AUX_TUPLE_HH_9FC3968B_8F14_4FA6_B497_C23EF1E23A5C
 
 #include <concepts>
 #include <iosfwd>
 #include <tuple>
 
-namespace aux::tuple_support
+namespace aux::inline tuple
 {
+    template <class First, class... Rest>
+    class packed_tuple {
+    public:
+        packed_tuple(packed_tuple const&) = default;
+        packed_tuple(packed_tuple&&) = default;
+        packed_tuple& operator=(packed_tuple const&) = default;
+        packed_tuple& operator=(packed_tuple&&) = default;
+        bool operator<=>(packed_tuple const&) const = default;
+
+        constexpr packed_tuple(First first = First(), Rest... rest)
+            : first{first}
+            , rest{rest...}
+            {
+            }
+
+    public:
+        template <size_t N>
+        constexpr auto get() const {
+            if constexpr (N == 0) {
+                return this->first;
+            }
+            else {
+                return rest.template get<N-1>();
+            }
+        }
+        template <size_t N>
+        constexpr auto& get() {
+            if constexpr (N == 0) {
+                return this->first;
+            }
+            else {
+                return rest.template get<N-1>();
+            }
+        }
+
+    private:
+        First first;
+        packed_tuple<Rest...> rest;
+    } __attribute__((__packed__));
+
+    template <class First>
+    class packed_tuple<First> {
+    public:
+        packed_tuple(packed_tuple const&) = default;
+        packed_tuple(packed_tuple&&) = default;
+        packed_tuple& operator=(packed_tuple const&) = default;
+        packed_tuple& operator=(packed_tuple&&) = default;
+        bool operator<=>(packed_tuple const&) const = default;
+
+    public:
+        packed_tuple(First first = First())
+            : first(first)
+            {
+            }
+
+        template <size_t N> auto  get() const { static_assert(N == 0); return this->first; }
+        template <size_t N> auto& get()       { static_assert(N == 0); return this->first; }
+
+    private:
+        First first;
+    } __attribute__((__packed__));
+
     template <class T, size_t I>
     concept has_tuple_element = requires(T t) {
         typename std::tuple_element_t<I, std::remove_const_t<T>>;
@@ -20,11 +82,22 @@ namespace aux::tuple_support
         return (has_tuple_element<T, I>&& ...);
     }(std::make_index_sequence<std::tuple_size_v<T>>());
  
-} // ::aux::tuple_support
+} // ::aux::tuple
 
 namespace std
 {
-    template <class Ch, aux::tuple_support::tuple_like T>
+    using namespace aux::tuple;
+
+    template <class... Args>
+    struct tuple_size<packed_tuple<Args...>> { static constexpr auto value = sizeof... (Args); };
+    template <class... Args>
+    constexpr size_t tuple_size_v<packed_tuple<Args...>> = sizeof... (Args);
+    template <size_t I, class... Args>
+    struct tuple_element<I, packed_tuple<Args...>> {
+        using type = decltype(std::declval<packed_tuple<Args...>>().template get<I>());
+    };
+
+    template <class Ch, aux::tuple::tuple_like T>
     auto& operator<<(std::basic_ostream<Ch>& output, T const& t) noexcept {
         output.put('(');
         [&]<size_t ...I>(std::index_sequence<I...>) noexcept {
@@ -34,6 +107,4 @@ namespace std
     }
 } // ::std
 
-
-#endif/*INCLUDE_AUX_TUPLE_SUPPORT_HH_9FC3968B_8F14_4FA6_B497_C23EF1E23A5C*/
-
+#endif/*INCLUDE_AUX_TUPLE_HH_9FC3968B_8F14_4FA6_B497_C23EF1E23A5C*/
