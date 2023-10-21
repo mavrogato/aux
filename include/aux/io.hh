@@ -11,48 +11,11 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 
-#include "unique_handle.hh"
+#include "unique-handle.hh"
 
 namespace aux::inline io::inline posix
 {
-    // T.B.D.: unique_handle should not contains the deleter in the instance...
-    // class [[nodiscard]] unique_fd : public unique_handle<int, &::close, -1> {
-    //     //...
-    // };
-
-    class [[nodiscard]] unique_fd {
-    public:
-        unique_fd(unique_fd const&) = delete;
-        unique_fd& operator=(unique_fd const&) = delete;
-
-        explicit unique_fd(int fd = -1) noexcept
-            : fd{fd}
-            {
-            }
-        unique_fd(unique_fd&& other) noexcept
-            : fd{std::exchange(other.fd, -1)}
-            {
-            }
-        ~unique_fd() noexcept {
-            if (this->fd != -1) {
-                [[maybe_unused]] auto ret = ::close(fd);
-                assert(ret != -1);
-                this->fd = -1;
-            }
-        }
-        auto& operator=(unique_fd&& other) noexcept {
-            if (auto dispose = std::exchange(this->fd, std::exchange(other.fd, -1)); dispose != -1) {
-                [[maybe_unused]] auto ret = ::close(dispose);
-                assert(ret != -1);
-            }
-            return *this;
-        }
-        operator int() const noexcept { return this->fd; }
-        explicit operator bool() const noexcept { return this->fd != -1; }
-
-    private:
-        int fd;
-    };
+    using unique_fd = aux::unique_handle_no_addr<int, -1, ::close>;
 
     template <class T>
     class [[nodiscard]] unique_mmap : public std::span<T> {
