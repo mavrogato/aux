@@ -14,7 +14,7 @@ namespace aux::inline tuple
         packed_tuple(packed_tuple&&) = default;
         packed_tuple& operator=(packed_tuple const&) = default;
         packed_tuple& operator=(packed_tuple&&) = default;
-        bool operator<=>(packed_tuple const&) const = default;
+        auto operator<=>(packed_tuple const&) const = default;
 
         constexpr packed_tuple(First first = First(), Rest... rest)
             : first{first}
@@ -24,7 +24,7 @@ namespace aux::inline tuple
 
     public:
         template <size_t N>
-        constexpr auto get() const {
+        constexpr auto const& get() const {
             if constexpr (N == 0) {
                 return this->first;
             }
@@ -54,7 +54,7 @@ namespace aux::inline tuple
         packed_tuple(packed_tuple&&) = default;
         packed_tuple& operator=(packed_tuple const&) = default;
         packed_tuple& operator=(packed_tuple&&) = default;
-        bool operator<=>(packed_tuple const&) const = default;
+        auto operator<=>(packed_tuple const&) const = default;
 
     public:
         packed_tuple(First first = First())
@@ -62,12 +62,21 @@ namespace aux::inline tuple
             {
             }
 
-        template <size_t N> auto  get() const { static_assert(N == 0); return this->first; }
-        template <size_t N> auto& get()       { static_assert(N == 0); return this->first; }
+        template <size_t N> auto const& get() const { static_assert(N == 0); return this->first; }
+        template <size_t N> auto&       get()       { static_assert(N == 0); return this->first; }
 
     private:
         First first;
     } __attribute__((__packed__));
+
+    template <size_t I, class... Args>
+    auto& get(packed_tuple<Args...>& t) noexcept {
+        return t.template get<I>();
+    }
+    template <size_t I, class... Args>
+    auto const& get(packed_tuple<Args...> const& t) noexcept {
+        return t.template get<I>();
+    }
 
     template <class T, size_t I>
     concept has_tuple_element = requires(T t) {
@@ -77,7 +86,7 @@ namespace aux::inline tuple
     template <class T>
     concept tuple_like = !std::is_reference_v<T> && requires(T) {
         std::tuple_size<T>::value;
-        //requires std::derived_from<std::tuple_size<T>, std::integral_constant<size_t, tuple_size_v<T>>>;
+        //requires std::derived_from<std::tuple_size<T>, std::integral_constant<size_t, std::tuple_size_v<T>>>;
     } && []<size_t... I>(std::index_sequence<I...>) noexcept {
         return (has_tuple_element<T, I>&& ...);
     }(std::make_index_sequence<std::tuple_size_v<T>>());
@@ -86,15 +95,13 @@ namespace aux::inline tuple
 
 namespace std
 {
-    using namespace aux::tuple;
-
     template <class... Args>
-    struct tuple_size<packed_tuple<Args...>> { static constexpr auto value = sizeof... (Args); };
+    struct tuple_size<aux::tuple::packed_tuple<Args...>> { static constexpr auto value = sizeof... (Args); };
     template <class... Args>
-    constexpr size_t tuple_size_v<packed_tuple<Args...>> = sizeof... (Args);
+    constexpr size_t tuple_size_v<aux::tuple::packed_tuple<Args...>> = sizeof... (Args);
     template <size_t I, class... Args>
-    struct tuple_element<I, packed_tuple<Args...>> {
-        using type = decltype(std::declval<packed_tuple<Args...>>().template get<I>());
+    struct tuple_element<I, aux::tuple::packed_tuple<Args...>> {
+        using type = decltype(std::declval<aux::tuple::packed_tuple<Args...>>().template get<I>());
     };
 
     template <class Ch, aux::tuple::tuple_like T>
