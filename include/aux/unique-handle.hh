@@ -62,7 +62,7 @@ namespace aux
         : public std::unique_ptr<T, detail::handle_deleter_no_addr<T, NIL, DEL>>
     {
         using base_type = std::unique_ptr<T, detail::handle_deleter_no_addr<T, NIL, DEL>>;
-        unique_handle_no_addr(T handle) noexcept
+        unique_handle_no_addr(T handle = NIL) noexcept
             : base_type{handle, typename base_type::deleter_type{}}
             {
             }
